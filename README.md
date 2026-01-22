@@ -1,2 +1,2 @@
 # MAPS
-MAPS: Model-Independent Access Control Policy Synthesis from Unstructured Text
+MAPS (Model-Independent Access Control Policy Synthesis) is a research prototype that uses Large Language Models (LLMs) to automatically transform unstructured natural language access control documents (PDF/DOCX/TXT) into structured, machine-enforceable security policies (MESPs). The system supports policy extraction, dataset generation, and policy visualization, and is evaluated using fuzzy matrix analysis and BERTScore for accuracy and semantic alignment.
