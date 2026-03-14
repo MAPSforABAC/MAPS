@@ -62,10 +62,8 @@ def extract_text_from_docx(path: str) -> str:
     except Exception as e:
         raise RuntimeError("Please install docx2txt: pip install docx2txt") from e
 
-    # Extract all visible text; second arg is image output dir (None = ignore images)
     text = docx2txt.process(path, None) or ""
 
-    # Normalize similar to your other extractors
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     print(text)
@@ -123,7 +121,6 @@ def load_input_text_and_attributes(input_path: str) -> Tuple[str, str]:
     if ext == ".zip":
         return extract_text_from_zip(input_path)
     elif ext in {".pdf", ".txt", ".docx"}:
-        # Single file input; no attributes.txt
         return extract_text_from_file(input_path), ""
     else:
         raise ValueError("Input must be a .zip, .pdf, .txt, .docx, or a directory containing these files.")
@@ -158,11 +155,8 @@ import json
 from typing import List, Tuple
 import anthropic
 
-# =========================
-# OpenAI (unchanged)
-# =========================
 def llm_openai(system: str, user: str, model: str = "gpt-3.5-turbo") -> str:
-    openai.api_key = 'sk-CGRW5s3ZIJFsVkxjBDa0RWPrOqf2050CxOQePNPq-XT3BlbkFJMt4IWJu9q5akPl-XjQNTOqS19z36seAk6G9HOjOZsA'
+    openai.api_key = "" #Please add your api key here
     response = openai.ChatCompletion.create(
         model=model,
         temperature=0.2,
@@ -173,11 +167,8 @@ def llm_openai(system: str, user: str, model: str = "gpt-3.5-turbo") -> str:
     )
     return response["choices"][0]["message"]["content"].strip()
 
-# =========================
-# Gemini (direct API; unchanged)
-# =========================
 def llm_gemini(system: str, user: str, model: str = "gemini-2.5-flash") -> str:
-    api_key = "AIzaSyBib7hfuRMT8G8bhL1Qs4PWhSUWVT6RapQ"
+    api_key = "" #Please add your api key here
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     full_prompt = f"System: {system}\nUser: {user}"
@@ -198,10 +189,7 @@ def llm_gemini(system: str, user: str, model: str = "gemini-2.5-flash") -> str:
     else:
         return f"Gemini API Error {resp.status_code}: {resp.text}"
 
-# =========================
-# OpenRouter models (TNG, Qwen) — unchanged
-# =========================
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY =  "" #Please add your api key here
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 TNG_MODEL_ID = "tngtech/deepseek-r1t2-chimera:free"
@@ -252,51 +240,6 @@ def llm_qwen(system: str, user: str, model: str = QWEN_MODEL_ID) -> str:
     except Exception as e:
         return f" Qwen OpenRouter Error: {str(e)}"
 
-# import os
-# import requests
-
-# def llm_openai_four(system: str, user: str, model: str = "gpt-4o") -> str:
-#     """
-#     gpt-4o version of llm_gemini, using the same REST API structure 
-#     as the working gemini-2.5-flash function.
-#     Returns plain string like before.
-#     """
-#     print("Coming here 1")
-#     # Option 1: read from env var; Option 2: hardcode your key
-#     api_key = "AIzaSyC9PuBtpeYZ3MGPGb4AFaS3TUW-A66k1eQ"
-
-#     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-#     headers = {"Content-Type": "application/json"}
-
-#     # Combine system and user message exactly as before
-#     full_prompt = f"System: {system}\nUser: {user}"
-#     print("coming here 2")
-#     data = {
-#         "contents": [
-#             {
-#                 "parts": [{"text": full_prompt}]
-#             }
-#         ],
-#         "generationConfig": {
-#             "temperature": 0.2
-#         }
-#     }
-
-#     try:
-#         resp = requests.post(url, headers=headers, json=data, timeout=120)
-#         resp.raise_for_status()
-#         result = resp.json()
-#         print("Here is the result")
-#         print(result)
-#         try:
-#             return result["candidates"][0]["content"]["parts"][0]["text"].strip()
-#         except (KeyError, IndexError):
-#             return "gpt-4o response format unexpected. Full response:\n" + str(result)
-
-#     except Exception as e:
-#         return f"gpt-4o API Error: {e}"
-
-
 def llm_openai_four(system: str, user: str, model: str = "gpt-4o") -> str:
     openai.api_key = "sk-CGRW5s3ZIJFsVkxjBDa0RWPrOqf2050CxOQePNPq-XT3BlbkFJMt4IWJu9q5akPl-XjQNTOqS19z36seAk6G9HOjOZsA"
     
@@ -316,7 +259,7 @@ def llm_openai_four(system: str, user: str, model: str = "gpt-4o") -> str:
 
 
 
-MINIMAX_API_KEY = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJHcm91cE5hbWUiOiJQcmF0aWsgU29udW5lIiwiVXNlck5hbWUiOiJQcmF0aWsgU29udW5lIiwiQWNjb3VudCI6IiIsIlN1YmplY3RJRCI6IjE5ODM3MzE1ODMzNTMzNjA5MzAiLCJQaG9uZSI6IiIsIkdyb3VwSUQiOiIxOTgzNzMxNTc0OTgxNTM0MjQzIiwiUGFnZU5hbWUiOiIiLCJNYWlsIjoicHJhdGlrc29udW5lMjhAZ21haWwuY29tIiwiQ3JlYXRlVGltZSI6IjIwMjUtMTAtMzAgMTE6NTc6MTgiLCJUb2tlblR5cGUiOjEsImlzcyI6Im1pbmltYXgifQ.ED3MxSoVp7hdZKDoy9z_SMyhvYF3wD2RKJ1akHlJzPggoOGkTGbr4zids2Wwks40pm3-84JWm6onLAqDyInRDA0MfGg8KVXkn0KcGT3IJFv2YK-docqL9VRsoKZWxtYoVu2Pc81B2TZE66gO2Jl4z55ZCtSlGrzWmmEiAKy07v1SjAJgug2YB54BClTk321UIHb7ZVRTgqTis8kVNTNEzoOspKUViextO3Fjj_X77SJ_DbC3P1ffU4GmIxO1i0WXoYnNynO1iQ9PTpakM4GRW1095iYIUki54gdi_bL2t3oAVtv0K54G74m63FCPp3W27D8tC-Wnvt3_XlNNdbvuJA"  # ← Your MiniMax API Key
+MINIMAX_API_KEY ="" #Please add your api key here
 MINIMAX_MODEL_ID = "MiniMax-M2"
 
 def llm_minimax(system: str, user: str, model: str = MINIMAX_MODEL_ID) -> str:
@@ -343,10 +286,7 @@ def llm_minimax(system: str, user: str, model: str = MINIMAX_MODEL_ID) -> str:
     except Exception as e:
         return f"MiniMax Error: {e}"
 
-# =========================
-# Perplexity (NEW)
-# =========================
-PERPLEXITY_API_KEY = "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"
+PERPLEXITY_API_KEY = "" #please add your api key here
 PERPLEXITY_DEFAULT_MODEL = "sonar"  # you can also use 'sonar', 'sonar-medium-chat', etc.
 
 def llm_perplexity(system: str, user: str, model: str = PERPLEXITY_DEFAULT_MODEL) -> str:
@@ -375,9 +315,6 @@ def llm_perplexity(system: str, user: str, model: str = PERPLEXITY_DEFAULT_MODEL
     except Exception as e:
         return f"Perplexity Error: {e}"
 
-# =========================
-# Stage 1 / Stage 2 (unchanged)
-# =========================
 def stage1_filter(raw_text: str, llm_fn) -> str:
     chunks = chunk_text(raw_text)
     if not chunks:
@@ -395,9 +332,6 @@ def stage2_to_nlacp(filtered_paragraph: str, llm_fn) -> str:
         return ""
     return llm_fn(SYSTEM_STAGE2, USER_STAGE2.format(filtered_paragraph=filtered_paragraph))
 
-# =========================
-# Normalization / Validation (unchanged)
-# =========================
 TIME_NORMALIZATION = [
     (r"\boffice hours\b", "weekdays from 9 AM to 5 PM"),
     (r"\bworking hours\b", "weekdays from 9 AM to 5 PM"),
@@ -434,17 +368,11 @@ def validate_and_fix_rules(nlacp_text: str) -> str:
             seen.add(key)
     return "\n".join(uniq)
 
-# =========================
-# Utilities (unchanged)
-# =========================
 def extract_attributes_used(gpt_output: str):
     pattern = re.compile(r"\(([^:]+):")
     attributes = set(re.findall(pattern, gpt_output))
     return list(attributes)
 
-# =========================
-# Provider dispatcher (UPDATED: +perplexity)
-# =========================
 def _call_llm_provider(system_prompt: str, prompt: str,
                        provider: str,
                        model_openai: str,
@@ -469,9 +397,6 @@ def _call_llm_provider(system_prompt: str, prompt: str,
     else:
         return llm_openai(system_prompt, prompt, model=model_openai or "gpt-3.5-turbo")
 
-# =========================
-# ABAC + XACML (provider-aware) — UPDATED to pass model_perplexity
-# =========================
 def generate_abac_rules_from_content(nlacp_content: str,
                                      model_selection: str,
                                      attributes_content: str = "",
@@ -632,15 +557,13 @@ def json_to_dataframe(json_text: str):
 
 import pandas as pd
 import numpy as np
-# put this near the very top of app10.py, BEFORE any pyplot import
 import matplotlib
-matplotlib.use("Agg")   # non-GUI backend for servers
+matplotlib.use("Agg")  
 import matplotlib.pyplot as plt
 from textwrap import wrap
 import math
 
 def _split_multi_tokens(x: str) -> list:
-    """Split multi-valued cells like 'A, B and C' into ['A','B','C']"""
     if x is None:
         return []
     s = str(x).strip()
@@ -719,7 +642,6 @@ def plot_attribute_suns(attr_values: dict, out_path: str = "attributes_graph.png
 
 import time 
 
-# === ADD THIS TO app10.py (near the bottom) ===
 def run_pipeline_to_zip(
     input_path: str,
     outzip_path: str = None,
@@ -736,15 +658,8 @@ def run_pipeline_to_zip(
         base_name = os.path.splitext(os.path.basename(input_path))[0]
         outzip_path = f"{base_name}_out.zip"
 
-    """
-    Web-callable wrapper around the CLI flow.
-    Returns the path to the created ZIP (outzip_path) on success.
-    Raises on error (so Flask can flash a message).
-    """
-    # --- Load content (same as in main) ---
     raw, attributes_content = load_input_text_and_attributes(input_path)
 
-    # --- Pick LLM callable for Stage 1 & 2 based on provider (same mapping as main) ---
     if provider == "gemini":
         def llm(sys, usr, mdl=model_stage):
             gem_model = "gemini-2.5-flash" if mdl == "gpt-3.5-turbo" else mdl
@@ -773,16 +688,13 @@ def run_pipeline_to_zip(
         def llm(sys, usr, mdl=model_stage):
             return llm_openai(sys, usr, model=mdl)
 
-    # --- Stage 1 & 2 ---
     filtered = stage1_filter(raw, llm)
     nlacp_raw = stage2_to_nlacp(filtered, llm)
     nlacp_raw = re.sub(r"\.\s+", ".\n", nlacp_raw)
     nlacp_clean = validate_and_fix_rules(nlacp_raw)
 
-    # --- Mode selection ---
     model_selection = "both" if (mode == "auto" and attributes_content) else ("single" if mode == "auto" else mode)
 
-    # --- Generate MESP (provider-aware) ---
     gpt_output, attributes_used = generate_abac_rules_from_content(
         nlacp_clean,
         model_selection=model_selection,
@@ -797,7 +709,6 @@ def run_pipeline_to_zip(
         model_perplexity=(PERPLEXITY_DEFAULT_MODEL if model_rules == "gpt-3.5-turbo" else model_rules)
     )
 
-    # --- Table JSON (provider-aware) ---
     table_json_str = request_table_json_from_gpt(
         gpt_output,
         model=model_table,
@@ -811,14 +722,12 @@ def run_pipeline_to_zip(
     )
     table_json_str = strip_code_fences(table_json_str)
 
-    # --- Dataframe + CSV + Graph ---
     df = json_to_dataframe(table_json_str)
     table_csv_path = "attributes_table.csv"
     df.to_csv(table_csv_path, index=False)
     attr_values = collect_attribute_values(df)
     graph_img_path = plot_attribute_suns(attr_values, out_path="attributes_graph.png", cols=3, label_wrap=18)
 
-    # --- Write artifacts in the current working directory ---
     stage1_path = "stage1.txt"
     stage2_path = "stage2.txt"
     nlacp_path  = "NLACP.txt"
@@ -838,11 +747,9 @@ def run_pipeline_to_zip(
 
     elapsed_time = time.time() - start_time
 
-    # Save duration into a text file for record
     with open("time_taken.txt", "w") as tfile:
         tfile.write(f"Processing completed in {elapsed_time:.2f} seconds.\n")
 
-    # --- Pack ZIP to the requested out path ---
     with zipfile.ZipFile(outzip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.write(stage1_path, arcname="stage1.txt")
         zf.write(stage2_path, arcname="stage2.txt")
@@ -859,10 +766,6 @@ def run_pipeline_to_zip(
 
     return outzip_path
 
-
-# =========================
-# MAIN (UPDATED: +perplexity choice & model mappings)
-# =========================
 def main():
     ap = argparse.ArgumentParser(description="ZIP/pdf/txt/docx ➜ filtered paragraph ➜ NLACP ➜ MESP + XACML (policy.zip)")
     ap.add_argument("input", help="Path to .zip | .pdf | .txt | .docx | directory containing these files")
@@ -886,7 +789,6 @@ def main():
 
     raw, attributes_content = load_input_text_and_attributes(args.input)
 
-    # ---- Choose LLM function for Stage 1 & 2
     if args.provider == "gemini":
         def llm(sys, usr, mdl=args.model_stage):
             gem_model = "gemini-2.5-flash" if mdl == "gpt-3.5-turbo" else mdl
@@ -915,18 +817,14 @@ def main():
         def llm(sys, usr, mdl=args.model_stage):
             return llm_openai(sys, usr, model=mdl)
 
-    # ---- Stage 1
     filtered = stage1_filter(raw, llm)
 
-    # ---- Stage 2
     nlacp_raw = stage2_to_nlacp(filtered, llm)
-    nlacp_raw = re.sub(r"\.\s+", ".\n", nlacp_raw)  # line break after periods
+    nlacp_raw = re.sub(r"\.\s+", ".\n", nlacp_raw)  
     nlacp_clean = validate_and_fix_rules(nlacp_raw)
 
-    # ---- Mode selection
     model_selection = "both" if (args.mode == "auto" and attributes_content) else ("single" if args.mode == "auto" else args.mode)
 
-    # ---- Generate MESP rules (provider-aware)
     gpt_output, attributes_used = generate_abac_rules_from_content(
         nlacp_clean,
         model_selection=model_selection,
@@ -941,7 +839,6 @@ def main():
         model_perplexity=(PERPLEXITY_DEFAULT_MODEL if args.model_rules == "gpt-3.5-turbo" else args.model_rules)
     )
     print("I have generated output")
-    # ---- Table JSON (provider-aware)
     table_json_str = request_table_json_from_gpt(
         gpt_output,
         model=args.model_table,
@@ -969,7 +866,6 @@ def main():
         label_wrap=18
     )
 
-    # ---- Write artifacts
     stage1_path = "stage1.txt"  # merged content
     stage2_path = "stage2.txt"  # filtered paragraph
     nlacp_path = "NLACP.txt"    # final NLACP sentences
