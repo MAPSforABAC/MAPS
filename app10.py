@@ -8,6 +8,38 @@ import tempfile
 import pdfplumber
 import json
 from typing import List, Tuple
+import time 
+import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")  
+import matplotlib.pyplot as plt
+from textwrap import wrap
+import math
+import openai
+from google.ai.generativelanguage_v1 import types
+import google.generativeai as genai
+import requests
+import argparse
+import re
+import zipfile
+import os
+import tempfile
+import pdfplumber
+import json
+from typing import List, Tuple
+import anthropic
+
+OPENAI_35_KEY = "" #Please add openai gpt-3.5-turbo key here
+GEMINI_25_KEY = "" #Please add gemini-2.5-flash key here
+OPENROUTER_API_KEY =  "" #Please add your api key here
+OPENAI_GPT_4O = "" #Please add openai gpt-4o key here
+MINIMAX_API_KEY ="" #Please add your api key here
+MINIMAX_MODEL_ID = "MiniMax-M2"
+PERPLEXITY_API_KEY = "" #please add your api key here
+PERPLEXITY_DEFAULT_MODEL = "sonar"  # you can also use 'sonar', 'sonar-medium-chat', etc.
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+
 
 SYSTEM_STAGE1 = (
     "You filter meeting text. Keep ONLY access-control-relevant content: "
@@ -141,22 +173,9 @@ def chunk_text(s: str, max_chars: int = 4000) -> List[str]:
         start = cut
     return chunks
 
-import openai
-from google.ai.generativelanguage_v1 import types
-import google.generativeai as genai
-import requests
-import argparse
-import re
-import zipfile
-import os
-import tempfile
-import pdfplumber
-import json
-from typing import List, Tuple
-import anthropic
 
 def llm_openai(system: str, user: str, model: str = "gpt-3.5-turbo") -> str:
-    openai.api_key = "" #Please add your api key here
+    openai.api_key =  OPENAI_35_KEY 
     response = openai.ChatCompletion.create(
         model=model,
         temperature=0.2,
@@ -168,7 +187,7 @@ def llm_openai(system: str, user: str, model: str = "gpt-3.5-turbo") -> str:
     return response["choices"][0]["message"]["content"].strip()
 
 def llm_gemini(system: str, user: str, model: str = "gemini-2.5-flash") -> str:
-    api_key = "" #Please add your api key here
+    api_key = GEMINI_25_KEY
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     full_prompt = f"System: {system}\nUser: {user}"
@@ -189,8 +208,6 @@ def llm_gemini(system: str, user: str, model: str = "gemini-2.5-flash") -> str:
     else:
         return f"Gemini API Error {resp.status_code}: {resp.text}"
 
-OPENROUTER_API_KEY =  "" #Please add your api key here
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 TNG_MODEL_ID = "tngtech/deepseek-r1t2-chimera:free"
 def llm_tng(system: str, user: str, model: str = TNG_MODEL_ID) -> str:
@@ -241,7 +258,7 @@ def llm_qwen(system: str, user: str, model: str = QWEN_MODEL_ID) -> str:
         return f" Qwen OpenRouter Error: {str(e)}"
 
 def llm_openai_four(system: str, user: str, model: str = "gpt-4o") -> str:
-    openai.api_key = "sk-CGRW5s3ZIJFsVkxjBDa0RWPrOqf2050CxOQePNPq-XT3BlbkFJMt4IWJu9q5akPl-XjQNTOqS19z36seAk6G9HOjOZsA"
+    openai.api_key = OPENAI_GPT_4O
     
     response = openai.ChatCompletion.create(
         model=model,
@@ -254,13 +271,6 @@ def llm_openai_four(system: str, user: str, model: str = "gpt-4o") -> str:
     
     return response["choices"][0]["message"]["content"].strip()
 
-
-
-
-
-
-MINIMAX_API_KEY ="" #Please add your api key here
-MINIMAX_MODEL_ID = "MiniMax-M2"
 
 def llm_minimax(system: str, user: str, model: str = MINIMAX_MODEL_ID) -> str:
     try:
@@ -286,8 +296,6 @@ def llm_minimax(system: str, user: str, model: str = MINIMAX_MODEL_ID) -> str:
     except Exception as e:
         return f"MiniMax Error: {e}"
 
-PERPLEXITY_API_KEY = "" #please add your api key here
-PERPLEXITY_DEFAULT_MODEL = "sonar"  # you can also use 'sonar', 'sonar-medium-chat', etc.
 
 def llm_perplexity(system: str, user: str, model: str = PERPLEXITY_DEFAULT_MODEL) -> str:
     """
@@ -555,13 +563,7 @@ def json_to_dataframe(json_text: str):
         norm_rows.append(norm)
     return pd.DataFrame(norm_rows, columns=cols)
 
-import pandas as pd
-import numpy as np
-import matplotlib
 matplotlib.use("Agg")  
-import matplotlib.pyplot as plt
-from textwrap import wrap
-import math
 
 def _split_multi_tokens(x: str) -> list:
     if x is None:
@@ -640,7 +642,6 @@ def plot_attribute_suns(attr_values: dict, out_path: str = "attributes_graph.png
     plt.close(fig)
     return out_path
 
-import time 
 
 def run_pipeline_to_zip(
     input_path: str,
