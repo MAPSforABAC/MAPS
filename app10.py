@@ -19,14 +19,6 @@ import openai
 from google.ai.generativelanguage_v1 import types
 import google.generativeai as genai
 import requests
-import argparse
-import re
-import zipfile
-import os
-import tempfile
-import pdfplumber
-import json
-from typing import List, Tuple
 import anthropic
 
 OPENAI_35_KEY = "" #Please add openai gpt-3.5-turbo key here
