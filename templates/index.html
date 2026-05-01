@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>ABAC Policy Generator</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <!-- reCAPTCHA v2 script -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="overlay">
@@ -46,6 +48,10 @@
               {% endfor %}
             </select>
           </div>
+        </div>
+
+        <div class="recaptcha-wrapper">
+          <div class="g-recaptcha" data-sitekey="change it"></div>
         </div>
 
         <button type="submit" class="btn">Generate Policy ZIP</button>
