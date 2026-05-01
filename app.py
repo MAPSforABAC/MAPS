@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 import os
 import uuid
+import requests 
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, send_file, redirect, url_for, flash
 
 from app10 import run_pipeline_to_zip
 
 app = Flask(__name__)
-app.secret_key = "change-me" 
+app.secret_key = "change-me"  # update for production
 
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
 WORK_DIR = os.path.abspath("webwork")
 os.makedirs(WORK_DIR, exist_ok=True)
 
 ALLOWED_EXT = {".zip"}
+
+RECAPTCHA_SECRET_KEY =  "change it"
 
 PROVIDERS = [
     ("openai", "OpenAI"),
@@ -46,6 +49,22 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload():
+    captcha_response = request.form.get("g-recaptcha-response", "")
+    if not captcha_response:
+        flash("Please complete the CAPTCHA before submitting.")
+        return redirect(url_for("index"))
+
+    verify = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data={"secret": RECAPTCHA_SECRET_KEY, "response": captcha_response},
+        timeout=5,
+    )
+    result = verify.json()
+    if not result.get("success"):
+        flash("CAPTCHA verification failed. Please try again.")
+        return redirect(url_for("index"))
+
+    # Validate file
     if "zipfile" not in request.files:
         flash("Please choose a .zip file.")
         return redirect(url_for("index"))
@@ -60,6 +79,7 @@ def upload():
         flash("Only .zip files are accepted.")
         return redirect(url_for("index"))
 
+    # Read provider & models from form
     provider = request.form.get("provider", "openai")
     mode = request.form.get("mode", "auto")
 
@@ -93,6 +113,7 @@ def upload():
         flash(f"Processing failed: {e}")
         return redirect(url_for("index"))
 
+    # Stream download
     return send_file(
         zip_path,
         as_attachment=True,
